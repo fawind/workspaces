@@ -23,7 +23,7 @@ func RefreshRepoCache() error {
 		numRepos += len(repos)
 	}
 
-	err = WriteRepoCacheFile(repoCache)
+	err = WriteRepoCache(repoCache)
 
 	println("Updated the local repo cache:")
 	for org, repos := range repoCache {

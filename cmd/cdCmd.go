@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/fawind/workspaces/workspaces/finder"
 	"github.com/spf13/cobra"
 )
 
@@ -15,5 +16,5 @@ var CdCmd = &cobra.Command{
 
 func changeDir(cmd *cobra.Command, args []string) error {
 	println("Changing Directory...")
-	return nil
+	return finder.GetRepository()
 }

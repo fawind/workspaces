@@ -1,6 +1,8 @@
 package config
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -131,15 +133,37 @@ func ReadRepoCache() (RepoCache, error) {
 		return nil, err
 	}
 
-	err = readYamlFile(repoCacheFile, &repos)
-	if os.IsNotExist(err) {
-		return nil, errors.Errorf("repo cache file does not exist: %s", repoCacheFile)
+	file, err := os.Open(repoCacheFile)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error opening repo cache file: %s", repoCacheFile)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		line := scanner.Text()
+		println(">> " + line)
+		parts := strings.Split(line, ",")
+		if len(parts) != 2 {
+			return nil, errors.Errorf("Invalid repo cache file. Expected something like 'https://github.com/my-org:repo' but got '%s'", line)
+		}
+		orgUrl, err := url.Parse(parts[0])
+		if err != nil {
+			return nil, errors.Errorf("Invalid repo org: %s", parts[0])
+		}
+		org := Organization{*orgUrl}
+		repos[org] = append(repos[org], parts[1])
 	}
 
-	return repos, err
+	if err := scanner.Err(); err != nil {
+		return nil, errors.Wrapf(err, "error scanning repo cache file: %s", repoCacheFile)
+	}
+
+	return repos, nil
 }
 
-func WriteRepoCacheFile(repos RepoCache) error {
+func WriteRepoCache(repoCache RepoCache) error {
 	confDir, err := getConfigDir()
 	if err != nil {
 		return nil
@@ -153,7 +177,25 @@ func WriteRepoCacheFile(repos RepoCache) error {
 	if err := os.MkdirAll(confDir, defaultFileMode); err != nil {
 		return errors.Wrapf(err, "error creating config dir: %s", confDir)
 	}
-	return writeYamlFile(repoCacheFile, &repos)
+
+	file, err := os.OpenFile(repoCacheFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultFileMode)
+	if err != nil {
+		return errors.Wrapf(err, "error opening repo cache file: %s", repoCacheFile)
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	for org, repos := range repoCache {
+		for _, repo := range repos {
+			if _, err := w.WriteString(fmt.Sprintf("%s,%s\n", org, repo)); err != nil {
+				return errors.Wrapf(err, "error writing repo cache file: %s", repoCacheFile)
+			}
+		}
+	}
+	if err := w.Flush(); err != nil {
+		return errors.Wrapf(err, "error writing repo cache file: %s", repoCacheFile)
+	}
+	return nil
 }
 
 func writeYamlFile(path string, out interface{}) error {
