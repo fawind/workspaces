@@ -39,12 +39,20 @@ func getRepoCacheFile() (string, error) {
 	return path.Join(confDir, ".repos.yml"), nil
 }
 
+func getSecretsFile() (string, error) {
+	confDir, err := getConfigDir()
+	if err != nil {
+		return "", errors.Wrapf(err, "error getting secrets file location")
+	}
+	return path.Join(confDir, ".secrets.yml"), nil
+}
+
 type Organization struct {
 	url url.URL
 }
 
-func (o Organization) GetApiUrl() url.URL {
-	return url.URL{
+func (o Organization) GetApiUrl() *url.URL {
+	return &url.URL{
 		Scheme: o.url.Scheme,
 		Opaque: o.url.Opaque,
 		User:   o.url.User,
@@ -90,6 +98,11 @@ type Config struct {
 
 type RepoCache map[Organization][]string
 
+type Secret struct {
+	Organization Organization `yaml:"organization"`
+	Token        string       `yaml:"token"`
+}
+
 func emptyConfig() Config {
 	return Config{Workspaces: []Workspace{}}
 }
@@ -123,6 +136,21 @@ func WriteConfig(config Config) error {
 		return errors.Wrapf(err, "error creating config dir: %s", confDir)
 	}
 	return writeYamlFile(confFile, &config)
+}
+
+func ReadSecrets() ([]Secret, error) {
+	secretsFile, err := getSecretsFile()
+	if err != nil {
+		return nil, err
+	}
+
+	var secrets []Secret
+	err = readYamlFile(secretsFile, &secrets)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+
+	return secrets, err
 }
 
 func ReadRepoCache() (RepoCache, error) {

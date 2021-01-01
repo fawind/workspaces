@@ -1,21 +1,21 @@
-package config
+package repos
 
 import (
 	"fmt"
-	"github.com/fawind/workspaces/workspaces/repos"
+	"github.com/fawind/workspaces/workspaces/config"
 	"github.com/google/go-github/v33/github"
 )
 
 func RefreshRepoCache() error {
-	conf, err := ReadConfig()
+	conf, err := config.ReadConfig()
 	if err != nil {
 		return err
 	}
 
-	var repoCache = make(RepoCache)
+	var repoCache = make(config.RepoCache)
 	numRepos := 0
 	for _, ws := range conf.Workspaces {
-		repos, err := repos.GetRepositories(ws.Organization.GetApiUrl(), ws.Organization.GetOrgName())
+		repos, err := GetRepositories(*ws.Organization.GetApiUrl(), ws.Organization.GetOrgName())
 		if err != nil {
 			return err
 		}
@@ -23,7 +23,7 @@ func RefreshRepoCache() error {
 		numRepos += len(repos)
 	}
 
-	err = WriteRepoCache(repoCache)
+	err = config.WriteRepoCache(repoCache)
 
 	println("Updated the local repo cache:")
 	for org, repos := range repoCache {

@@ -2,13 +2,21 @@ package repos
 
 import (
 	"context"
+	"github.com/fawind/workspaces/workspaces/config"
 	"github.com/google/go-github/v33/github"
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
+	"net/http"
 	"net/url"
 )
 
 func GetRepositories(baseUrl url.URL, org string) ([]*github.Repository, error) {
-	client := newClient(baseUrl)
+	secrets, err := config.ReadSecrets()
+	if err != nil {
+		return nil, err
+	}
+
+	client := newClient(baseUrl, getTokenForOrg(secrets, baseUrl))
 
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
@@ -29,8 +37,25 @@ func GetRepositories(baseUrl url.URL, org string) ([]*github.Repository, error) 
 	return allRepos, nil
 }
 
-func newClient(baseUrl url.URL) *github.Client {
-	client := github.NewClient(nil)
+func newClient(baseUrl url.URL, token string) *github.Client {
+	var c *http.Client
+	if token != "" {
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: token},
+		)
+		c = oauth2.NewClient(context.Background(), ts)
+	}
+
+	client := github.NewClient(c)
 	client.BaseURL = &baseUrl
 	return client
+}
+
+func getTokenForOrg(secrets []config.Secret, baseUrl url.URL) string {
+	for _, secret := range secrets {
+		if secret.Organization.GetApiUrl().String() == baseUrl.String() {
+			return secret.Token
+		}
+	}
+	return ""
 }
