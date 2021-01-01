@@ -3,22 +3,30 @@ package finder
 import (
 	"fmt"
 	"github.com/fawind/workspaces/workspaces/config"
+	"github.com/pkg/errors"
+	"path"
 )
 import "github.com/ktr0731/go-fuzzyfinder"
 
 type searchItem struct {
 	organization config.Organization
-	name         string
+	repoName     string
+}
+
+type SelectedRepo struct {
+	Organization config.Organization
+	RepoName     string
+	LocalDir     string
 }
 
 func (s searchItem) String() string {
-	return fmt.Sprintf("%s/%s", s.organization, s.name)
+	return fmt.Sprintf("%s/%s", s.organization, s.repoName)
 }
 
-func GetRepository() error {
+func GetRepository() (SelectedRepo, error) {
 	repoCache, err := config.ReadRepoCache()
 	if err != nil {
-		return err
+		return SelectedRepo{}, err
 	}
 
 	var searchItems []searchItem
@@ -34,8 +42,29 @@ func GetRepository() error {
 			return searchItems[i].String()
 		})
 	if err != nil {
-		return err
+		return SelectedRepo{}, err
 	}
-	fmt.Printf("selected: %v\n", idx)
-	return nil
+
+	selected := searchItems[idx]
+
+	localDir, err := getLocalDirForRepo(selected)
+	if err != nil {
+		return SelectedRepo{}, err
+	}
+
+	return SelectedRepo{selected.organization, selected.repoName, localDir}, nil
+}
+
+func getLocalDirForRepo(item searchItem) (string, error) {
+	conf, err := config.ReadConfig()
+	if err != nil {
+		return "", err
+	}
+
+	for _, ws := range conf.Workspaces {
+		if ws.Organization == item.organization {
+			return path.Join(ws.Directory, item.repoName), nil
+		}
+	}
+	return "", errors.Errorf("Could not find local dir for %s in config file", item.organization)
 }

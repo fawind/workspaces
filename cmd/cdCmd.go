@@ -16,5 +16,6 @@ var CdCmd = &cobra.Command{
 
 func changeDir(cmd *cobra.Command, args []string) error {
 	println("Changing Directory...")
-	return finder.GetRepository()
+	finder.GetRepository()
+	return nil
 }
