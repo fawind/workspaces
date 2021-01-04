@@ -2,27 +2,51 @@ package shell
 
 import (
 	"fmt"
+	"github.com/fawind/workspaces/workspaces/finder"
 	"github.com/pkg/errors"
+	"os"
 	"os/exec"
-	"runtime"
 )
 
-func OpenInBrowser(url string) error {
-	var err error
-
-	switch runtime.GOOS {
-	case "linux":
-		err = exec.Command("xdg-open", url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
-	}
-
+func MayCloneRepo(repo finder.LocalRepo) error {
+	hasDir, err := dirExists(repo.LocalDir)
 	if err != nil {
-		return errors.Wrapf(err, "Error opening url in browser: %s", url)
+		return err
 	}
+
+	if hasDir {
+		return nil
+	}
+
+	return cloneRepo(repo)
+}
+
+func cloneRepo(repo finder.LocalRepo) error {
+	gitAddress := repo.Organization.GetGitAddress(repo.RepoName)
+	fmt.Printf("Cloning %s into %s\n", gitAddress, repo.LocalDir)
+	cmd := exec.Command("git", "clone", gitAddress, repo.LocalDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	if err := cmd.Start(); err != nil {
+		return errors.Wrap(err, "error cloning repo")
+	}
+
+	if err := cmd.Wait(); err != nil {
+		return errors.Wrap(err, "error cloning repo")
+	}
+
 	return nil
+}
+
+func dirExists(dir string) (bool, error) {
+	_, err := os.Stat(dir)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, errors.Wrapf(err, "error checking if dir exist: %s", dir)
 }

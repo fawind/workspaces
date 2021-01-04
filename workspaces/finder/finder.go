@@ -3,6 +3,7 @@ package finder
 import (
 	"fmt"
 	"github.com/fawind/workspaces/workspaces/config"
+	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/errors"
 	"path"
 )
@@ -13,7 +14,7 @@ type searchItem struct {
 	repoName     string
 }
 
-type SelectedRepo struct {
+type LocalRepo struct {
 	Organization config.Organization
 	RepoName     string
 	LocalDir     string
@@ -23,10 +24,10 @@ func (s searchItem) String() string {
 	return fmt.Sprintf("%s/%s", s.organization, s.repoName)
 }
 
-func GetRepository() (SelectedRepo, error) {
+func GetRepository() (LocalRepo, error) {
 	repoCache, err := config.ReadRepoCache()
 	if err != nil {
-		return SelectedRepo{}, err
+		return LocalRepo{}, err
 	}
 
 	var searchItems []searchItem
@@ -42,17 +43,17 @@ func GetRepository() (SelectedRepo, error) {
 			return searchItems[i].String()
 		})
 	if err != nil {
-		return SelectedRepo{}, err
+		return LocalRepo{}, err
 	}
 
 	selected := searchItems[idx]
 
 	localDir, err := getLocalDirForRepo(selected)
 	if err != nil {
-		return SelectedRepo{}, err
+		return LocalRepo{}, err
 	}
 
-	return SelectedRepo{selected.organization, selected.repoName, localDir}, nil
+	return LocalRepo{selected.organization, selected.repoName, localDir}, nil
 }
 
 func getLocalDirForRepo(item searchItem) (string, error) {
@@ -63,7 +64,12 @@ func getLocalDirForRepo(item searchItem) (string, error) {
 
 	for _, ws := range conf.Workspaces {
 		if ws.Organization == item.organization {
-			return path.Join(ws.Directory, item.repoName), nil
+			path := path.Join(ws.Directory, item.repoName)
+			expanded, err := homedir.Expand(path)
+			if err != nil {
+				return "", errors.Wrapf(err, "error expanding home dir for path: ", path)
+			}
+			return expanded, nil
 		}
 	}
 	return "", errors.Errorf("Could not find local dir for %s in config file", item.organization)

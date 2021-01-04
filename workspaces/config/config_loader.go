@@ -61,6 +61,10 @@ func (o Organization) GetApiUrl() *url.URL {
 	}
 }
 
+func (o Organization) GetGitAddress(repoName string) string {
+	return fmt.Sprintf("git@%s:%s/%s.git", o.url.Host, o.GetOrgName(), repoName)
+}
+
 func (o Organization) GetOrgName() string {
 	return strings.TrimPrefix(o.url.Path, "/")
 }
