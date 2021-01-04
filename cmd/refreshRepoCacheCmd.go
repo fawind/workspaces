@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/fawind/workspaces/workspaces/repos"
+	"github.com/fawind/workspaces/repos"
 	"github.com/spf13/cobra"
 )
 
@@ -11,6 +11,7 @@ func init() {
 
 var RefreshRepoCacheCmd = &cobra.Command{
 	Use:  "refresh",
+	Short: "Refresh the cached list of repositories",
 	RunE: refreshRepoCache,
 }
 

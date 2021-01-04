@@ -8,9 +8,7 @@ import (
 
 var RootCmd = &cobra.Command{
 	Use: "workspaces",
-	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
-	},
+	Short: "A command line utility for quickly switching between repositories",
 }
 
 func Execute() {

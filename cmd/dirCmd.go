@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/fawind/workspaces/workspaces/finder"
-	"github.com/fawind/workspaces/workspaces/shell"
+	"github.com/fawind/workspaces/finder"
+	"github.com/fawind/workspaces/shell"
 	"github.com/spf13/cobra"
 )
 
@@ -13,6 +13,7 @@ func init() {
 
 var DirCmd = &cobra.Command{
 	Use:  "dir",
+	Short: "Print the local directory of the repository",
 	RunE: printLocalDir,
 }
 

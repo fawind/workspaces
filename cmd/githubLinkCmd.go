@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/fawind/workspaces/workspaces/finder"
+	"github.com/fawind/workspaces/finder"
 	"github.com/spf13/cobra"
 )
 
@@ -12,6 +12,7 @@ func init() {
 
 var GithubLinkCmd = &cobra.Command{
 	Use:  "github",
+	Short: "Print the URL of the repository",
 	RunE: printGithubLink,
 }
 
