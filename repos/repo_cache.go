@@ -3,7 +3,7 @@ package repos
 import (
 	"fmt"
 	"github.com/fawind/workspaces/config"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v35/github"
 )
 
 func RefreshRepoCache() error {

@@ -3,7 +3,7 @@ package repos
 import (
 	"context"
 	"github.com/fawind/workspaces/config"
-	"github.com/google/go-github/v33/github"
+	"github.com/google/go-github/v35/github"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"net/http"

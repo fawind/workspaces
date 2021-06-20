@@ -3,7 +3,7 @@ module github.com/fawind/workspaces
 go 1.14
 
 require (
-	github.com/google/go-github/v33 v33.0.0
+	github.com/google/go-github/v35 v35.3.0
 	github.com/ktr0731/go-fuzzyfinder v0.3.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
