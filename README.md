@@ -8,7 +8,7 @@ A small command line utility to quickly switch between repositories using a fuzz
 
 ## Usage
 
-Install by running `go get github.com/fawind/workspaces`.
+Install by running `go install github.com/fawind/workspaces@latest`.
 
 **Commands:**
 * `workspaces dir`: Print the local directory of the selected repository. Clones the repo first if it does not exist locally yet.
